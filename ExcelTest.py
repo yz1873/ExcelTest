@@ -1,12 +1,20 @@
 import xlrd
+import xlwt
 import sys
 
 # 当月（2017年几月）
-currentMonth = 4
+currentMonth = 3
+#  路径前加r，原因：文件名中的 \U 开始的字符被编译器认为是八进制
+#  保存输出数据的文档地址
+file_path = r"C:\Users\Administrator\Desktop\1.xls"
+#  原文档地址
+sourcefile_path = r"C:\Users\Administrator\Desktop\2.xlsx"
 
-data = xlrd.open_workbook(r"C:\Users\Zhang Yu\Desktop\微机站订单（基于分类+协议）.xlsx")
-# 路径前加r，原因：文件名中的 \U 开始的字符被编译器认为是八进制
-booksheet = data.sheets()[0] # 打开第一张表
+
+data = xlrd.open_workbook(sourcefile_path)
+booksheet = data.sheets()[0]  # 打开第一张表
+wb = xlwt.Workbook(encoding='utf-8', style_compression=0)
+newsheet = wb.add_sheet('datasheet', cell_overwrite_ok=True)  # 创建sheet2 第二参数用于确认同一个cell单元是否可以重设值。
 
 # 找到订单编号列
 colPO = -1
@@ -229,7 +237,7 @@ for row in range(booksheet.nrows):
             POOfY[2017].add(booksheet.cell_value(row, colPO))
             yearlyCount(ListOfTotalPrice2017, POOf2017)
 
-            # 2017年统计  4月的没算???
+            # 2017年后统计
             if (date_value[1] <= currentMonth):
 
                 # 省分订单与总价统计
@@ -284,89 +292,292 @@ dictTransform(SeProvinceAndSupplier,SeSupplierOfPro)
 dictTransform(TotalProvinceAndSupplier,TotalSupplierOfPro)
 
 
-print("-----------------------------------------------------------------------------")
-print("累计交易情况：   2015年订单数为：",len(POOfY[2015]),"     2016年订单数为：",len(POOfY[2016]),"     2017年订单数为：",len(POOfY[2017]))
-print("-----------------------------------------------------------------------------")
-print("2015年省分下单情况")
-for key in POOf2015:
-    print("第%d"%key,"个月的订单量为：%-5d"%len(POOf2015[key]),"  交易额为：",ListOfTotalPrice2015[key-1])
-print("-----------------------------------------------------------------------------")
-print("2016年省分下单情况")
-for key in POOf2016:
-    print("第%d"%key,"个月的订单量为：%-5d"%len(POOf2016[key]),"  交易额为：",ListOfTotalPrice2016[key-1])
-print("-----------------------------------------------------------------------------")
-print("2017年省分下单情况")
-for key in POOf2017:
-    print("第%d"%key,"个月的订单量为：%-5d"%len(POOf2017[key]),"  交易额为：",ListOfTotalPrice2017[key-1])
-print("-----------------------------------------------------------------------------")
-print("省分累计下单情况")
+#  扩大1到11列的宽度
+for n in range(0, 11):
+    newsheet.col(n).width = 256*20
+
+#  表头格式
+header_style = xlwt.easyxf('font:height 540;')
+#  表行列名格式
+tablestyle = 'pattern: pattern solid, fore_colour yellow; '  # 背景颜色为黄色
+tablestyle += 'font: height 200, bold on; '  #  粗体字
+tablestyle += 'align: horz centre, vert center; '  #  居中
+table_style = xlwt.easyxf(tablestyle)
+#  正文格式
+textstyle = 'font: height 200;'  #  粗体字
+textstyle += 'align: horz centre, vert center; '  #  居中
+text_style = xlwt.easyxf(textstyle)
+
+x = 0
+y = 0
+newsheet.write(x+0, y+0, '累计交易情况', header_style)
+
+newsheet.write(x+1, y+0, '行标签', table_style)
+newsheet.write(x+2, y+0, '订单量', table_style)
+
+newsheet.write(x+1, y+1, '2015', table_style)
+newsheet.write(x+2, y+1, len(POOfY[2015]), text_style)
+newsheet.write(x+1, y+2, '2016', table_style)
+newsheet.write(x+2, y+2, len(POOfY[2016]), text_style)
+newsheet.write(x+1, y+3, '2017', table_style)
+newsheet.write(x+2, y+3, len(POOfY[2017]), text_style)
+
+newsheet.write(x+1, y+4, '总计', table_style)
+newsheet.write(x+2, y+4, len(POOfY[2015])+len(POOfY[2016])+len(POOfY[2017]), text_style)
+
+x = 5
+y = 0
+newsheet.write(x+0, y+0, '交易情况分析', header_style)
+newsheet.write(x+1, y+0, '年份', table_style)
+newsheet.write(x+1, y+1, '月份', table_style)
+newsheet.write(x+1, y+2, '订单量', table_style)
+newsheet.write(x+1, y+3, '交易额', table_style)
+newsheet.write_merge(x+2, x+13, y, y, '2015', table_style)
+for n in range(0, 12):
+    newsheet.write(x + 2 + n, y + 1, n + 1, table_style)
+    newsheet.write(x + 2 + n, y + 2, len(POOf2015[n+1]), text_style)
+    newsheet.write(x + 2 + n, y + 3, ListOfTotalPrice2015[n], text_style)
+x = 17
+newsheet.write_merge(x+2, x+13, y, y, '2016', table_style)
+for n in range(0, 12):
+    newsheet.write(x + 2 + n, y + 1, n + 1, table_style)
+    newsheet.write(x + 2 + n, y + 2, len(POOf2016[n+1]), text_style)
+    newsheet.write(x + 2 + n, y + 3, ListOfTotalPrice2016[n], text_style)
+x = 29
+newsheet.write_merge(x+2, x+13, y, y, '2017', table_style)
+for n in range(0, 12):
+    newsheet.write(x + 2 + n, y + 1, n + 1, table_style)
+    newsheet.write(x + 2 + n, y + 2, len(POOf2017[n+1]), text_style)
+    newsheet.write(x + 2 + n, y + 3, ListOfTotalPrice2017[n], text_style)
+
+x = 46
+y = 0
+newsheet.write(x+0, y+0, '省分累计下单情况', header_style)
+newsheet.write(x+1, y+0, '省分', table_style)
+newsheet.write(x+1, y+1, '订单量', table_style)
+newsheet.write(x+1, y+2, '交易额', table_style)
+x += 2
 for key in TotalProAndPO:
-    print(key, "--订单量为:%-5d"%len(TotalProAndPO[key]),"  交易额为：",TotalProAndTotalPrice[key])
-print("-----------------------------------------------------------------------------")
-print("2017年省分下单情况")
+    newsheet.write(x, y, key, text_style)
+    newsheet.write(x, y+1, len(TotalProAndPO[key]), text_style)
+    newsheet.write(x, y+2, TotalProAndTotalPrice[key], text_style)
+    x += 1
+
+x = 46
+y = 0
+newsheet.write(x+0, y+0, '省分累计下单情况', header_style)
+newsheet.write(x+1, y+0, '省分', table_style)
+newsheet.write(x+1, y+1, '订单量', table_style)
+newsheet.write(x+1, y+2, '交易额', table_style)
+x += 2
+for key in TotalProAndPO:
+    newsheet.write(x, y, key, text_style)
+    newsheet.write(x, y+1, len(TotalProAndPO[key]), text_style)
+    newsheet.write(x, y+2, TotalProAndTotalPrice[key], text_style)
+    x += 1
+
+x += 3
+y = 0
+newsheet.write(x+0, y+0, '2017年省分下单情况', header_style)
+newsheet.write(x+1, y+0, '省分', table_style)
+newsheet.write(x+1, y+1, '订单量', table_style)
+newsheet.write(x+1, y+2, '交易额', table_style)
+x += 2
 for key in ProAndPO:
-    print(key, "--订单量为:%-5d"%len(ProAndPO[key]),"  交易额为：",ProAndTotalPrice[key])
-print("-----------------------------------------------------------------------------")
-print("2017年%d月省分下单情况"%currentMonth)
+    newsheet.write(x, y, key, text_style)
+    newsheet.write(x, y+1, len(ProAndPO[key]), text_style)
+    newsheet.write(x, y+2, ProAndTotalPrice[key], text_style)
+    x += 1
+
+x += 3
+y = 0
+newsheet.write(x+0, y+0, '2017年当前月省分下单情况', header_style)
+newsheet.write(x+1, y+0, '省分', table_style)
+newsheet.write(x+1, y+1, '订单量', table_style)
+newsheet.write(x+1, y+2, '交易额', table_style)
+x += 2
 for key in SeProAndPO:
-    print(key, "--订单量为:%-5d"%len(SeProAndPO[key]),"  交易额为：",SeProAndTotalPrice[key])
-print("-----------------------------------------------------------------------------")
+    newsheet.write(x, y, key, text_style)
+    newsheet.write(x, y+1, len(SeProAndPO[key]), text_style)
+    newsheet.write(x, y+2, SeProAndTotalPrice[key], text_style)
+    x += 1
 
-print("省分累计典配模式下单情况")
-for key in CaTotalProAndPO:
-    print(key, "典配订单量为:", len(CaTotalProAndPO[key]))
-print("-----------------------------------------------------------------------------")
-print("2017年省分累计典配模式下单情况")
-for key in CaProAndPO:
-    print(key, "典配订单量为:", len(CaProAndPO[key]))
-print("-----------------------------------------------------------------------------")
-print("2017年%d月省分累计典配模式下单情况"%currentMonth)
-for key in CaSeProAndPO:
-    print(key, "典配订单量为:", len(CaSeProAndPO[key]))
-print("-----------------------------------------------------------------------------")
+x += 3
+y = 0
+newsheet.write(x+0, y+0, '省分累计典配模式下单情况', header_style)
+newsheet.write(x+1, y+0, '省分', table_style)
+newsheet.write(x+1, y+1, '典配订单数量', table_style)
+newsheet.write(x+1, y+2, '订单量', table_style)
+newsheet.write(x+1, y+3, '百分比', table_style)
+x += 2
+for key in TotalProAndPO:
+    newsheet.write(x, y, key, text_style)
+    if key in CaTotalProAndPO:
+        newsheet.write(x, y + 1, len(CaTotalProAndPO[key]), text_style)
+        newsheet.write(x, y+2, len(TotalProAndPO[key]), text_style)
+        newsheet.write(x, y+3, len(CaTotalProAndPO[key])/len(TotalProAndPO[key]), text_style)
+    else:
+        newsheet.write(x, y + 1, 0, text_style)
+        newsheet.write(x, y+2, len(TotalProAndPO[key]), text_style)
+        newsheet.write(x, y+3, 0, text_style)
+    x += 1
 
-print("累计供应商订单数")
+
+x += 3
+y = 0
+newsheet.write(x+0, y+0, '2017年省分累计典配模式下单情况', header_style)
+newsheet.write(x+1, y+0, '省分', table_style)
+newsheet.write(x+1, y+1, '典配订单数量', table_style)
+newsheet.write(x+1, y+2, '订单量', table_style)
+newsheet.write(x+1, y+3, '百分比', table_style)
+x += 2
+for key in ProAndPO:
+    newsheet.write(x, y, key, text_style)
+    if key in CaProAndPO:
+        newsheet.write(x, y + 1, len(CaProAndPO[key]), text_style)
+        newsheet.write(x, y+2, len(ProAndPO[key]), text_style)
+        newsheet.write(x, y+3, len(CaProAndPO[key])/len(ProAndPO[key]), text_style)
+    else:
+        newsheet.write(x, y + 1, 0, text_style)
+        newsheet.write(x, y+2, len(ProAndPO[key]), text_style)
+        newsheet.write(x, y+3, 0, text_style)
+    x += 1
+
+x += 3
+y = 0
+newsheet.write(x+0, y+0, '2017年当前月省分累计典配模式下单情况', header_style)
+newsheet.write(x+1, y+0, '省分', table_style)
+newsheet.write(x+1, y+1, '典配订单数量', table_style)
+newsheet.write(x+1, y+2, '订单量', table_style)
+newsheet.write(x+1, y+3, '百分比', table_style)
+x += 2
+for key in SeProAndPO:
+    newsheet.write(x, y, key, text_style)
+    if key in CaSeProAndPO:
+        newsheet.write(x, y + 1, len(CaSeProAndPO[key]), text_style)
+        newsheet.write(x, y+2, len(SeProAndPO[key]), text_style)
+        newsheet.write(x, y+3, len(CaSeProAndPO[key])/len(SeProAndPO[key]), text_style)
+    else:
+        newsheet.write(x, y + 1, 0, text_style)
+        newsheet.write(x, y+2, len(SeProAndPO[key]), text_style)
+        newsheet.write(x, y+3, 0, text_style)
+    x += 1
+
+x += 3
+y = 0
+newsheet.write(x+0, y+0, '累计供应商份额统计', header_style)
+newsheet.write(x+1, y+0, '供应商名称', table_style)
+newsheet.write(x+1, y+1, '订单数量', table_style)
+x += 2
 for key in TotalPOofSupplier:
-    print("%-25s"%key, "订单量为:", len(TotalPOofSupplier[key]))
-print("-----------------------------------------------------------------------------")
-print("2017年供应商订单数")
+    newsheet.write(x, y, key, text_style)
+    newsheet.write(x, y+1, len(TotalPOofSupplier[key]), text_style)
+    x += 1
+
+
+x += 3
+y = 0
+newsheet.write(x+0, y+0, '2017年供应商份额统计', header_style)
+newsheet.write(x+1, y+0, '供应商名称', table_style)
+newsheet.write(x+1, y+1, '订单数量', table_style)
+x += 2
 for key in POofSupplier:
-    print("%-25s"%key, "订单量为:", len(POofSupplier[key]))
-print("-----------------------------------------------------------------------------")
-print("2017年%d月供应商订单数"%currentMonth)
+    newsheet.write(x, y, key, text_style)
+    newsheet.write(x, y+1, len(POofSupplier[key]), text_style)
+    x += 1
+
+x += 3
+y = 0
+newsheet.write(x+0, y+0, '2017年当前月供应商份额统计', header_style)
+newsheet.write(x+1, y+0, '供应商名称', table_style)
+newsheet.write(x+1, y+1, '订单数量', table_style)
+x += 2
 for key in SePOofSupplier:
-    print("%-25s"%key, "订单量为:", len(SePOofSupplier[key]))
-print("-----------------------------------------------------------------------------")
+    newsheet.write(x, y, key, text_style)
+    newsheet.write(x, y+1, len(SePOofSupplier[key]), text_style)
+    x += 1
 
 
-print("累计供应商覆盖省分")
+x += 3
+y = 0
+newsheet.write(x+0, y+0, '累计供应商各省分覆盖率情况', header_style)
+newsheet.write(x+1, y+0, '供应商名称', table_style)
+newsheet.write(x+1, y+1, '覆盖省分数', table_style)
+x += 2
 for key in TotalProvinceAndSupplier:
-    print("%-25s"%key, "覆盖省分数为:", len(TotalProvinceAndSupplier[key]), "覆盖省分为:", TotalProvinceAndSupplier[key])
-print("-----------------------------------------------------------------------------")
-print("2017年供应商覆盖省分")
+    newsheet.write(x, y, key, text_style)
+    newsheet.write(x, y+1, len(TotalProvinceAndSupplier[key]), text_style)
+    x += 1
+
+x += 3
+y = 0
+newsheet.write(x+0, y+0, '2017年供应商各省分覆盖率情况', header_style)
+newsheet.write(x+1, y+0, '供应商名称', table_style)
+newsheet.write(x+1, y+1, '覆盖省分数', table_style)
+x += 2
 for key in ProvinceAndSupplier:
-    print("%-25s"%key, "覆盖省分数为:", len(ProvinceAndSupplier[key]), "覆盖省分为:", ProvinceAndSupplier[key])
-print("-----------------------------------------------------------------------------")
-print("2017年%d月供应商覆盖省分"%currentMonth)
+    newsheet.write(x, y, key, text_style)
+    newsheet.write(x, y+1, len(ProvinceAndSupplier[key]), text_style)
+    x += 1
+
+
+x += 3
+y = 0
+newsheet.write(x+0, y+0, '2017年当前月供应商各省分覆盖率情况', header_style)
+newsheet.write(x+1, y+0, '供应商名称', table_style)
+newsheet.write(x+1, y+1, '覆盖省分数', table_style)
+x += 2
 for key in SeProvinceAndSupplier:
-    print("%-25s"%key, "覆盖省分数为:", len(SeProvinceAndSupplier[key]), "覆盖省分为:", SeProvinceAndSupplier[key])
-print("-----------------------------------------------------------------------------")
+    newsheet.write(x, y, key, text_style)
+    newsheet.write(x, y+1, len(SeProvinceAndSupplier[key]), text_style)
+    x += 1
 
-print("累计省分采购覆盖供应商")
+x += 3
+y = 0
+newsheet.write(x+0, y+0, '累计省分采购覆盖供应商情况', header_style)
+newsheet.write(x+1, y+0, '省分', table_style)
+newsheet.write(x+1, y+1, '覆盖供应商数', table_style)
+x += 2
 for key in TotalSupplierOfPro:
-    print("%-5s"%key,"覆盖供应商数为:", len(TotalSupplierOfPro[key]), "覆盖供应商为:", TotalSupplierOfPro[key])
-print("-----------------------------------------------------------------------------")
-print("2017年省分采购覆盖供应商")
-for key in SupplierOfPro:
-    print("%-5s"%key,"覆盖供应商数为:", len(SupplierOfPro[key]), "覆盖供应商为:", SupplierOfPro[key])
-print("-----------------------------------------------------------------------------")
-print("2017年%d月省分采购覆盖供应商"%currentMonth)
-for key in SeSupplierOfPro:
-    print("%-5s"%key,"覆盖供应商数为:", len(SeSupplierOfPro[key]), "覆盖供应商为:", SeSupplierOfPro[key])
-print("-----------------------------------------------------------------------------")
+    newsheet.write(x, y, key, text_style)
+    newsheet.write(x, y+1, len(TotalSupplierOfPro[key]), text_style)
+    x += 1
 
-print("2017年到货时间情况")
+x += 3
+y = 0
+newsheet.write(x+0, y+0, '2017年省分采购覆盖供应商情况', header_style)
+newsheet.write(x+1, y+0, '省分', table_style)
+newsheet.write(x+1, y+1, '覆盖供应商数', table_style)
+x += 2
+for key in SupplierOfPro:
+    newsheet.write(x, y, key, text_style)
+    newsheet.write(x, y+1, len(SupplierOfPro[key]), text_style)
+    x += 1
+
+x += 3
+y = 0
+newsheet.write(x+0, y+0, '2017年当前月省分采购覆盖供应商情况', header_style)
+newsheet.write(x+1, y+0, '省分', table_style)
+newsheet.write(x+1, y+1, '覆盖供应商数', table_style)
+x += 2
+for key in SeSupplierOfPro:
+    newsheet.write(x, y, key, text_style)
+    newsheet.write(x, y+1, len(SeSupplierOfPro[key]), text_style)
+    x += 1
+
+x += 3
+y = 0
+newsheet.write(x+0, y+0, '2017年到货时间情况', header_style)
+newsheet.write(x+1, y+0, '省分', table_style)
+newsheet.write(x+1, y+1, '最大到货时间', table_style)
+newsheet.write(x+1, y+2, '最小到货时间', table_style)
+newsheet.write(x+1, y+3, '平均到货时间', table_style)
+x += 2
 for key in ProvinceAndArrivalDay:
-    print("%-5s"%key, "最大到货时间为:%-5d"%max(ProvinceAndArrivalDay[key]),"最小到货时间为:%-5d"%min(ProvinceAndArrivalDay[key]),
-          "平均到货时间为:%-5d"%(sum(ProvinceAndArrivalDay[key])/len(ProvinceAndArrivalDay[key])))
-print("-----------------------------------------------------------------------------")
+    newsheet.write(x, y, key, text_style)
+    newsheet.write(x, y+1, max(ProvinceAndArrivalDay[key]), text_style)
+    newsheet.write(x, y + 2, min(ProvinceAndArrivalDay[key]), text_style)
+    newsheet.write(x, y + 3, round(sum(ProvinceAndArrivalDay[key])/len(ProvinceAndArrivalDay[key])), text_style)
+    x += 1
+
+wb.save(file_path)
