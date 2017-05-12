@@ -3,12 +3,12 @@ import xlwt
 import sys
 
 # 当月（2017年几月）
-currentMonth = 3
+currentMonth = 4
 #  路径前加r，原因：文件名中的 \U 开始的字符被编译器认为是八进制
 #  保存输出数据的文档地址
 file_path = r"C:\Users\Zhang Yu\Desktop\数据结果.xls"
 #  原文档地址
-sourcefile_path = r"C:\Users\Zhang Yu\Desktop\1.xlsx"
+sourcefile_path = r"C:\Users\Zhang Yu\Desktop\微机站订单（基于分类+协议）.xlsx"
 
 
 data = xlrd.open_workbook(sourcefile_path)
