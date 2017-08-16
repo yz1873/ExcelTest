@@ -3,7 +3,7 @@ import xlwt
 import sys
 
 # 当月（2017年几月）
-currentMonth = 4
+currentMonth = 7
 #  路径前加r，原因：文件名中的 \U 开始的字符被编译器认为是八进制
 #  保存输出数据的文档地址
 file_path = r"C:\Users\Zhang Yu\Desktop\数据结果.xls"
@@ -123,7 +123,8 @@ SeSupplierOfPro = {}
 TotalSupplierOfPro = {}
 # 2017年已到货到货订单省分与其订单天数list字典
 ProvinceAndArrivalDay = {}
-
+# 2017年特殊月已到货到货订单省分与其订单天数list字典
+SeProvinceAndArrivalDay = {}
 
 # 以下字典key均为供应商名称
 # 2017年供应商与订单集合字典
@@ -285,7 +286,18 @@ for row in range(booksheet.nrows):
                     templist = ProvinceAndArrivalDay[booksheet.cell_value(row, colProvince)[0:2]]
                     templist.append(round(booksheet.cell_value(row, colArrivalTime)-booksheet.cell_value(row, colPlaceTime)))
                     ProvinceAndArrivalDay[booksheet.cell_value(row, colProvince)[0:2]] = templist
-
+                # 统计的为到货时间为指定月的
+                if date_value_arrival[1] == currentMonth:
+                    if (booksheet.cell_value(row, colProvince)[0:2] not in SeProvinceAndArrivalDay):
+                        templist = []
+                        templist.append(
+                            round(booksheet.cell_value(row, colArrivalTime) - booksheet.cell_value(row, colPlaceTime)))
+                        SeProvinceAndArrivalDay[booksheet.cell_value(row, colProvince)[0:2]] = templist
+                    else:
+                        templist = SeProvinceAndArrivalDay[booksheet.cell_value(row, colProvince)[0:2]]
+                        templist.append(
+                            round(booksheet.cell_value(row, colArrivalTime) - booksheet.cell_value(row, colPlaceTime)))
+                        SeProvinceAndArrivalDay[booksheet.cell_value(row, colProvince)[0:2]] = templist
 # 由（供应商-省分）字典转化为（省分-供应商）字典
 dictTransform(ProvinceAndSupplier,SupplierOfPro)
 dictTransform(SeProvinceAndSupplier,SeSupplierOfPro)
@@ -569,6 +581,21 @@ for key in ProvinceAndArrivalDay:
     newsheet.write(x, y+1, max(ProvinceAndArrivalDay[key]), text_style)
     newsheet.write(x, y + 2, min(ProvinceAndArrivalDay[key]), text_style)
     newsheet.write(x, y + 3, round(sum(ProvinceAndArrivalDay[key])/len(ProvinceAndArrivalDay[key])), text_style)
+    x += 1
+
+x += 3
+y = 0
+newsheet.write(x+0, y+0, '2017年%d' % currentMonth + '月到货时间情况', header_style)
+newsheet.write(x+1, y+0, '省分', table_style)
+newsheet.write(x+1, y+1, '最大到货时间', table_style)
+newsheet.write(x+1, y+2, '最小到货时间', table_style)
+newsheet.write(x+1, y+3, '平均到货时间', table_style)
+x += 2
+for key in SeProvinceAndArrivalDay:
+    newsheet.write(x, y, key, text_style)
+    newsheet.write(x, y+1, max(SeProvinceAndArrivalDay[key]), text_style)
+    newsheet.write(x, y + 2, min(SeProvinceAndArrivalDay[key]), text_style)
+    newsheet.write(x, y + 3, round(sum(SeProvinceAndArrivalDay[key])/len(SeProvinceAndArrivalDay[key])), text_style)
     x += 1
 
 wb.save(file_path)
